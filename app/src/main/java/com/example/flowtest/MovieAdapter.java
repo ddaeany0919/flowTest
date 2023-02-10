@@ -31,11 +31,8 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
     @Override
     public void onBindViewHolder(@NonNull MovieViewHolder holder, int position) {
         Movie movie = mMovieList.get(position);
-
-        if (!movie.getImage().isEmpty()) {
-            Picasso.get().load(movie.getImage()).into(holder.postImageView);
-        }//잘 모르겠지만 url[ 경우면 에러가 뜬다고 한다. url유효성을 검사한다.
-
+        if (movie.getImage() !=null && !movie.getImage().isEmpty()){
+        Picasso.get().load(movie.getImage()).into(holder.postImageView);}
         holder.titleTextView.setText("제목 : "+movie.getTitle());
         holder.pubDateTextView.setText("출시 :"+movie.getPubDate());
         holder.userRatingTextView.setText("평점 : "+movie.getUserRating());

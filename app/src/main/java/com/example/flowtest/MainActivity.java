@@ -19,20 +19,18 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private EditText mSearchEditText;
-    private Button mSearchButton, mRecentSearchButton;
+    private Button mSearchButton;
 
     private RecyclerView mSearchResultRecyclerView;
 
     private MovieAdapter mMovieAdapter;
     private List<Movie> mMovieList = new ArrayList<>();
-    private AppDatabase mDb;
-    private static final String NAVER_API_KEY = "thfCHhOHJj8g5DtOWEA0";
-    private static final String NAVER_CLIENT_SECRET = "S0uO8XgYlW";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
 
         mSearchEditText = findViewById(R.id.search_edit_text);
         mSearchButton = findViewById(R.id.search_button);
-        mRecentSearchButton = findViewById(R.id.recent_search_button);
         mSearchResultRecyclerView = findViewById(R.id.search_result_recycler_view);
 
         mMovieAdapter = new MovieAdapter(mMovieList);
@@ -57,8 +54,7 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 new NaverMovieSearchTask().execute(searchTerm);
-                Log.d(searchTerm, searchTerm);
-
+                Log.d("searchTerm", searchTerm);
             }
         });
 
@@ -72,32 +68,32 @@ public class MainActivity extends AppCompatActivity {
 */    }
     private class NaverMovieSearchTask extends AsyncTask<String, Void, String> {
         @Override
-        protected String doInBackground(String... strings) {
-            String searchTerm = strings[0];
+        protected String doInBackground(String... params) {
+            String keyword = params[0];
+            String clientId = "thfCHhOHJj8g5DtOWEA0";
+            String clientSecret = "S0uO8XgYlW";
             String result = "";
             try {
-                String apiURL = "https://openapi.naver.com/v1/search/movie.json?query=" + searchTerm;
+                String text = URLEncoder.encode(keyword, "UTF-8");
+                String apiURL = "https://openapi.naver.com/v1/search/movie.json?query=" + text; // json 결과
                 URL url = new URL(apiURL);
-                HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                con.setRequestMethod("GET");
-                con.setRequestProperty("X-Naver-Client-Id", NAVER_API_KEY);
-                con.setRequestProperty("X-Naver-Client-Secret", NAVER_CLIENT_SECRET);
-                int responseCode = con.getResponseCode();
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("X-Naver-Client-Id", clientId);
+                conn.setRequestProperty("X-Naver-Client-Secret", clientSecret);
+                int responseCode = conn.getResponseCode();
                 BufferedReader br;
-                if (responseCode == 200) {
-                    br = new BufferedReader(new InputStreamReader(con.getInputStream()));
-                } else {
-                    br = new BufferedReader(new InputStreamReader(con.getErrorStream()));
+                if (responseCode == 200) { // 정상 호출
+                    br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                } else {  // 에러 발생
+                    br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
                 }
-                String inputLine;
-                StringBuffer response = new StringBuffer();
-                while ((inputLine = br.readLine()) != null) {
-                    response.append(inputLine);
+                String line;
+                while ((line = br.readLine()) != null) {
+                    result += line;
                 }
-                br.close();
-                result = response.toString();
             } catch (Exception e) {
-                Log.e("MainActivity", "NaverMovieSearchTask Error", e);
+                e.printStackTrace();
             }
             return result;
         }
@@ -105,24 +101,25 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
+            Log.d("Result", result);
             try {
-                JSONObject jsonObject = new JSONObject(result);
-                JSONArray items = jsonObject.getJSONArray("items");
-                mMovieList.clear();
-                for (int i = 0; i < items.length(); i++) {
-                    JSONObject item = items.getJSONObject(i);
-                    String image = item.getString("image");
-                    String title = item.getString("title");
-                    String pubDate = item.getString("pubDate");
-                    String userRating = item.getString("userRating");
-
-                    Movie movie = new Movie(image,title, pubDate, userRating);
-                    mMovieList.add(movie);
+                    JSONObject jsonObject = new JSONObject(result);
+                    JSONArray items = jsonObject.getJSONArray("items");
+                    mMovieList.clear();
+                    for (int i = 0; i < items.length(); i++) {
+                        JSONObject item = items.getJSONObject(i);
+                        String image = item.getString("image");
+                        String title = item.getString("title");
+                        String pubDate = item.getString("pubDate");
+                        String userRating = item.getString("userRating");
+                        Movie movie = new Movie(image, title, pubDate, userRating);
+                        mMovieList.add(movie);
+                    }
+                    mMovieAdapter.notifyDataSetChanged();
+                }catch(Exception e){
+                    Log.e("Error parsing JSON", e.toString());
                 }
-                mMovieAdapter.notifyDataSetChanged();
-            } catch (Exception e) {
-                Log.e("MainActivity", "onPostExecute Error", e);
-            }
+
         }
     }
 
