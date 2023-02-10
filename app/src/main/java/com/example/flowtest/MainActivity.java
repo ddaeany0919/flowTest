@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private List<Movie> mMovieList = new ArrayList<>();
     private AppDatabase mDb;
     private static final String NAVER_API_KEY = "thfCHhOHJj8g5DtOWEA0";
-    private static final String NAVER_CLIENT_SECRET = "18ySpKLAfb";
+    private static final String NAVER_CLIENT_SECRET = "S0uO8XgYlW";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
