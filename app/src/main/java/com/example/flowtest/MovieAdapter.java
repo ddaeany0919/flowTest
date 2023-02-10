@@ -1,5 +1,7 @@
 package com.example.flowtest;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,11 +33,22 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
     @Override
     public void onBindViewHolder(@NonNull MovieViewHolder holder, int position) {
         Movie movie = mMovieList.get(position);
+
         if (movie.getImage() !=null && !movie.getImage().isEmpty()){
-        Picasso.get().load(movie.getImage()).into(holder.postImageView);}
-        holder.titleTextView.setText("제목 : "+movie.getTitle());
-        holder.pubDateTextView.setText("출시 :"+movie.getPubDate());
-        holder.userRatingTextView.setText("평점 : "+movie.getUserRating());
+        Picasso.get().load(movie.getImage()).into(holder.postImageView);
+        }
+        String title = movie.getTitle().replaceAll("<b>","").replaceAll("</b>","");
+        holder.titleTextView.setText("제목 : " + title);
+        holder.pubDateTextView.setText("출시 :" + movie.getPubDate());
+        holder.userRatingTextView.setText("평점 : " + movie.getUserRating());
+
+        holder.postImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=0&ie=utf8&query="+title));
+                v.getContext().startActivity(intent); //해당 링크로 주소 이동
+            }
+        });
     }
 
     @Override
@@ -61,5 +74,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
             pubDateTextView = itemView.findViewById(R.id.pubDate_text_view);
             userRatingTextView = itemView.findViewById(R.id.userRating_text_view);
         }
+
     }
+
 }
