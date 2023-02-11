@@ -1,5 +1,6 @@
 package com.example.flowtest;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -25,12 +26,11 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private EditText mSearchEditText;
-    private Button mSearchButton;
-
+    private Button mSearchButton, mRecentSearchButton;
     private RecyclerView mSearchResultRecyclerView;
-
     private MovieAdapter mMovieAdapter;
-    private List<Movie> mMovieList = new ArrayList<>();
+    private final List<Movie> mMovieList = new ArrayList<>();
+    private RecentSearchRecordRepository mRecentSearchRecordRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,11 +39,14 @@ public class MainActivity extends AppCompatActivity {
 
         mSearchEditText = findViewById(R.id.search_edit_text);
         mSearchButton = findViewById(R.id.search_button);
+        mRecentSearchButton = findViewById(R.id.recent_search_button);
         mSearchResultRecyclerView = findViewById(R.id.search_result_recycler_view);
-
+        mRecentSearchButton = findViewById(R.id.recent_search_button);
         mMovieAdapter = new MovieAdapter(mMovieList);
         mSearchResultRecyclerView.setAdapter(mMovieAdapter);
         mSearchResultRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        mRecentSearchRecordRepository = new RecentSearchRecordRepository(this.getApplication());
 
         mSearchButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -54,18 +57,35 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 new NaverMovieSearchTask().execute(searchTerm);
-                Log.d("searchTerm", searchTerm);
+                insertSearchRecord(searchTerm);
             }
         });
 
-      /*  mRecentSearchButton.setOnClickListener(new View.OnClickListener() {
+        mRecentSearchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent recentSearchIntent = new Intent(MainActivity.this, RecentSearchActivity.class);
-                startActivity(recentSearchIntent);
+                Intent intent = new Intent(MainActivity.this, RecentSearchRecordActivity.class);
+                startActivityForResult(intent, 1);
             }
         });
-*/    }
+    }
+
+    private void insertSearchRecord(final String keyword) {
+        mRecentSearchRecordRepository.insertRecentSearchRecord(new RecentSearchRecord(keyword));
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1 && resultCode == RESULT_OK) {
+            String searchTerm = data.getStringExtra("search_term");
+            mSearchEditText.setText(searchTerm);
+            new NaverMovieSearchTask().execute(searchTerm);
+            Log.d("SearchTerm", searchTerm);
+        }
+    }
+
+
     private class NaverMovieSearchTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {
@@ -103,24 +123,23 @@ public class MainActivity extends AppCompatActivity {
             super.onPostExecute(result);
             Log.d("Result", result);
             try {
-                    JSONObject jsonObject = new JSONObject(result);
-                    JSONArray items = jsonObject.getJSONArray("items");
-                    mMovieList.clear();
-                    for (int i = 0; i < items.length(); i++) {
-                        JSONObject item = items.getJSONObject(i);
-                        String image = item.getString("image");
-                        String title = item.getString("title");
-                        String pubDate = item.getString("pubDate");
-                        String userRating = item.getString("userRating");
-                        Movie movie = new Movie(image, title, pubDate, userRating);
-                        mMovieList.add(movie);
-                    }
-                    mMovieAdapter.notifyDataSetChanged();
-                }catch(Exception e){
-                    Log.e("Error parsing JSON", e.toString());
+                JSONObject jsonObject = new JSONObject(result);
+                JSONArray items = jsonObject.getJSONArray("items");
+                mMovieList.clear();
+                for (int i = 0; i < items.length(); i++) {
+                    JSONObject item = items.getJSONObject(i);
+                    String image = item.getString("image");
+                    String title = item.getString("title");
+                    String pubDate = item.getString("pubDate");
+                    String userRating = item.getString("userRating");
+                    Movie movie = new Movie(image, title, pubDate, userRating);
+                    mMovieList.add(movie);
                 }
-
+                mMovieAdapter.notifyDataSetChanged();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(MainActivity.this, "영화 검색에 실패하였습니다.", Toast.LENGTH_SHORT).show();
+            }
         }
     }
-
 }

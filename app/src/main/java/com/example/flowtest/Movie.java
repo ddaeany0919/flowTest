@@ -1,10 +1,10 @@
 package com.example.flowtest;
 
 public class Movie {
-    private String mImage;
-    private String mTitle;
-    private String mPubDate;
-    private String mUserRating;
+    private final String mImage;
+    private final String mTitle;
+    private final String mPubDate;
+    private final String mUserRating;
 
 
     public Movie(String image,String title, String pubDate, String userRating) {

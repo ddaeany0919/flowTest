@@ -4,15 +4,16 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "search_history")
-public class SearchHistory {
+@Entity(tableName = "recent_search_record")
+public class RecentSearchRecord {
+
     @PrimaryKey(autoGenerate = true)
     private int id;
 
     @ColumnInfo(name = "search_term")
     private String searchTerm;
 
-    public SearchHistory(String searchTerm) {
+    public RecentSearchRecord(String searchTerm) {
         this.searchTerm = searchTerm;
     }
 
